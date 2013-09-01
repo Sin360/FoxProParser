@@ -17,6 +17,9 @@
 		// Instanciate parser
 		var parser = new  Parser();
 
+		// Set name of parsed file
+		parser.fileName = args[0];
+
 		// Parse each line
 		for (var i = 0; i < lines.length; i++) {
 			parser.parseLine(lines[i]);
@@ -25,12 +28,18 @@
 		// Log
 		console.log(JSON.stringify(parser));
 
+		fs.writeFile('report.json', JSON.stringify(parser), function (err) {
+			if (err) {
+				throw err;
+			}
+		});
+
 	});
 
 	var Parser = function () {
 
 		this.Classes = [];
-
+		this.fileName = "";
 		this.currentLine = 0;
 
 		this.parseLine = function (line) {
