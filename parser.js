@@ -175,6 +175,25 @@ var Parser = function () {
 			return true;
 		}
 
+		// for loop
+		pattern = /^For +(?:Each +)?(?:m\.)?(\w*)/gi;
+		if (line.contains(pattern)) {
+			// get active class object
+			var activeClass = this.getActiveClass();
+			// get active method object
+			var meth = activeClass.getActiveMethod();
+			var variables = /(?:m\.)?(\w+) *(\[.*?)?=/gi.exec(line);
+			meth.assignments.push(variables[1]);
+			return true;
+		}
+
+		// store assignments
+		pattern = /^store\s+.*?\s+to\s+(.+?)$/gi;
+		if (line.contains(pattern)) {
+			console.log(line);
+			return true;
+		}
+
 		// no pattern found
 		return false;
 	}

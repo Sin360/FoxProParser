@@ -8,7 +8,12 @@ DEFINE CLASS Mop AS Custom
 
 		LPARAMETERS cAbrev, cLabel
 
+		LOCAL nI
 		LOCAL ARRAY aArray(1)
+
+		FOR M.nI = 1 TO 4 STEP 1
+
+		ENDFOR
 
 	ENDPROC
 
