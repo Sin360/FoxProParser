@@ -3,6 +3,7 @@
 	var args = process.argv.splice(2);
 	var fs = require('fs');
 	var Parser = require('./parser.js');
+	var Report = require('./report.js');
 
 	// Read File content
 	fs.readFile(args[0], "utf8", function (err, data) {
@@ -25,9 +26,19 @@
 		for (var i = 0; i < lines.length; i++) {
 			parser.parseLine(lines[i]);
 		};
+
+		var data = parser.report();
+		var report = new Report(data);
 		
 		// write report file
-		fs.writeFile('reports/report.json', parser.report(), function (err) {
+		fs.writeFile('reports/report.json', data, function (err) {
+			if (err) {
+				throw err;
+			}
+		});
+
+		// write html report file
+		fs.writeFile('reports/report.html', report.build(), function (err) {
 			if (err) {
 				throw err;
 			}
