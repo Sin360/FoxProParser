@@ -29,7 +29,7 @@
 
 		var data = parser.report();
 		var report = new Report(data);
-		
+
 		// write report file
 		fs.writeFile('reports/report.json', data, function (err) {
 			if (err) {
