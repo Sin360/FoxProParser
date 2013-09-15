@@ -3,6 +3,7 @@ var Parser = function () {
 	this.Classes = [];
 	this.fileName = "";
 	this.currentLine = 0;
+	this.multilines = [];
 
 	this.parseLine = function (line) {
 
@@ -14,11 +15,37 @@ var Parser = function () {
 		// increment active line number
 		this.currentLine += 1;
 
-		// check for comment declaration
-		pattern = /^\*/gi;
+		// check for empty line
+		if (line.length === 0) {
+			return true;
+		}
+
+		// check for multiline
+		pattern = /;$/gi;
+		if (line.contains(pattern)) {
+			this.multilines.push(line.remove(pattern));
+			return true;
+		}
+
+		if (this.multilines.length) {
+			line = this.multilines.join(" ") + line;
+			this.multilines = [];
+		}
+
+		// check for comment line
+		pattern = /(^\*)|(^&&)/gi;
 		if (line.contains(pattern)) {
 			return true;
 		}
+
+		// ignored pattern
+		pattern = /(^endfor)|(^endtext)|(^endif)|(^endcase)|(^otherwise)|(^do case)|(^endif)|(^else)|(^select)|(^nodefault)|(dodefault)/gi;
+		if (line.contains(pattern)) {
+			return true;
+		}
+
+		// remove inline comments
+		line = this.removeInlineComments(line);
 
 		// check for class declaration
 		pattern = /(^define +class)/gi;
@@ -58,7 +85,7 @@ var Parser = function () {
 		}
 
 		// check for function declaration
-		pattern = /(protected )?(hidden )?(func(?:tion)?)/gi;
+		pattern = /^(protected )?(hidden )?(func(?:tion)?)/gi;
 		if (line.contains(pattern)) {
 			// get active class object
 			var activeClass = this.getActiveClass();
@@ -66,6 +93,8 @@ var Parser = function () {
 			var func = new Func();
 			// set name
 			func.name = line.remove(pattern);
+			// function name (parameters) declaration
+			this.searchInlineParametersDeclaration(func);
 			// set begin line number
 			func.beginLine = this.currentLine;
 			// add function object
@@ -84,7 +113,7 @@ var Parser = function () {
 		}
 
 		// check for procedure declaration
-		pattern = /(protected )?(hidden )?(proc(?:edure)?)/gi;
+		pattern = /^(protected )?(hidden )?(proc(?:edure)?)/gi;
 		if (line.contains(pattern)) {
 			// get active class object
 			var activeClass = this.getActiveClass();
@@ -92,6 +121,8 @@ var Parser = function () {
 			var proc = new Proc();
 			// set name
 			proc.name = line.remove(pattern);
+			// procedure name (parameters) declaration
+			this.searchInlineParametersDeclaration(proc);
 			// set begin line number
 			proc.beginLine = this.currentLine;
 			// add procedure object
@@ -118,8 +149,16 @@ var Parser = function () {
 		if (line.contains(pattern)) {
 			// get active method object
 			var meth = this.getActiveMethod();
+			// remove declaration
+			var declaration = line.remove(pattern);
+			// test parentheses declaration
+			var pattern = /\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi;
+			if (!line.contains(pattern)) {
+				// test brackets declaration
+				var pattern = /\[[0-9](?:\,)?(?:\s)?(?:[0-9])?\]/gi;
+			}
 			// split variables
-			var variables = line.remove(pattern).remove(/\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi).split(',');
+			var variables = declaration.remove(pattern).split(',');
 			for (var i = 0; i < variables.length; i++) {
 				// add variable
 				meth.variables.push(variables[i].trim());
@@ -138,6 +177,21 @@ var Parser = function () {
 				// add variable
 				meth.variables.push(variables[i].trim());
 			}
+			return true;
+		}
+
+		// check for array assignment
+		pattern = /^(?:m\.)?(\w+) *(\()|(\[).*?=/gi;
+		if (line.contains(pattern)) {
+			// test parentheses declaration
+			var pattern = /\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi;
+			if (!line.contains(pattern)) {
+				// test brackets declaration
+				var pattern = /\[[0-9](?:\,)?(?:\s)?(?:[0-9])?\]/gi;
+			}
+			// get active method object
+			var meth = this.getActiveMethod();
+			meth.assignments.push(line.remove(pattern).split(" ")[0]);
 			return true;
 		}
 
@@ -240,11 +294,23 @@ var Parser = function () {
 		if (line.contains(pattern)) {
 			// get active method object
 			var meth = this.getActiveMethod();
-			meth.assignments.push(line.remove(pattern).remove(/(?:m\.)?/gi).remove(/\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi));
+			var assign = line.remove(pattern).remove(/(?:m\.)?/gi);
+			var pattern = /\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi;
+			if (!line.contains(pattern)) {
+				pattern = /\[[0-9](?:\,)?(?:\s)?(?:[0-9])?\]/gi;
+			}
+			if (meth) {
+				meth.assignments.push(assign.remove(pattern));
+			} else {
+				// class property
+				var activeClass = this.getActiveClass();
+				activeClass.properties.push(assign.remove(pattern));
+			}
 			return true;
 		}
 
 		// no pattern found
+		console.log("no pattern found : " + line);
 		return false;
 	}
 
@@ -268,6 +334,26 @@ var Parser = function () {
 		return activeClass.getActiveMethod();
 	}
 
+	this.removeInlineComments = function (line) {
+		var pattern = /&&/gi;
+		if (line.contains(pattern)) {
+			return line.substr(0, line.indexOf('&&')).trim();
+		}
+		return line;
+	}
+
+	this.searchInlineParametersDeclaration = function (meth) {
+		var pattern = /\(/gi;
+		if (meth.name.contains(pattern)) {
+			var names = meth.name.split("(");
+			meth.name = names[0].trim();
+			var parameters = names[1].remove(")").split(",");
+			for (var i = 0; i < parameters.length; i++) {
+				meth.parameters.push(parameters[i].trim());
+			};
+		}
+	}
+
 	this.report = function () {
 		return JSON.stringify(this);
 	}
@@ -285,7 +371,6 @@ var Class = function () {
 	this.getActiveMethod = function () {
 		return this.methods[this.methods.length - 1];
 	}
-
 }
 
 var Meth = function () {
