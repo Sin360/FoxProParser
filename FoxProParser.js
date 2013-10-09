@@ -13,19 +13,14 @@
 			throw err;
 		}
 
-		// Split strings to array
-		var lines = data.split("\n");
-
 		// Instanciate parser
 		var parser = new Parser();
 
 		// Set name of parsed file
 		parser.fileName = args[0];
 
-		// Parse each line
-		for (var i = 0; i < lines.length; i++) {
-			parser.parseLine(lines[i]);
-		};
+		// Parse data
+		parser.execute(data);
 
 		var data = parser.report();
 		var report = new Report(data);

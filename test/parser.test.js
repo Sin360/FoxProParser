@@ -59,24 +59,19 @@ exports['parser'] = {
 				throw err;
 			}
 
-			// Split strings to array
-			var lines = data.split("\n");
-
 			// Instanciate parser
 			var parser = new Parser();
 
 			// Set name of parsed file
 			parser.fileName = 'test.prg';
 
-			// Parse each line
-			for (var i = 0; i < lines.length; i++) {
-				parser.parseLine(lines[i]);
-			};
+			// Parse data
+			parser.execute(data);
 
 			test.equal(typeof parser, "object", "should be an object");
 			test.equal(parser.fileName, "test.prg", "should return filename");
 			test.equal(parser.Classes.length, 1, "should return number of classes");
-			test.equal(parser.currentLine, lines.length, "should return number of lines");
+			test.equal(parser.currentLine, 32, "should return number of lines");
 			test.equal(parser.Classes[0].name, "Mop", "should return class name");
 			test.equal(parser.Classes[0].properties.length, 2, "should return number of properties");
 

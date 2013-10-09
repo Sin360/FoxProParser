@@ -17,19 +17,14 @@ exports['arrays'] = {
 				// Catch error
 				if (err) throw err;
 
-				// Split strings to array
-				var lines = data.split("\n");
-
 				// Instanciate parser
 				var parser = new Parser();
 
 				// Set name of parsed file
 				parser.fileName = 'arrays.prg';
 
-				// Parse each line
-				for (var i = 0; i < lines.length; i++) {
-					parser.parseLine(lines[i]);
-				};
+				// parse data
+				parser.execute(data);
 
 				self.parser = parser;
 				resources.parser = parser;

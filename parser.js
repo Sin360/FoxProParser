@@ -5,20 +5,28 @@ var Parser = function () {
 	this.currentLine = 0;
 	this.multilines = [];
 
+	this.execute = function (data) {
+		// Split strings to array
+		var lines = data.split("\n");
+
+		// Parse each line
+		for (var i = 0; i < lines.length; i++) {
+			// set active line number
+			this.currentLine = i + 1;
+
+			this.parseLine(lines[i]);
+		};
+	};
+
 	this.parseLine = function (line) {
 
-		var pattern;
+		line = this.cleanUpLine(line);
 
-		// remove trailing spaces
-		var line = line.trim()
-
-		// increment active line number
-		this.currentLine += 1;
-
-		// check for empty line
-		if (line.length === 0) {
+		if (this.isIgnoredPattern(line)) {
 			return true;
 		}
+
+		var pattern;
 
 		// check for multiline
 		pattern = /;$/gi;
@@ -31,21 +39,6 @@ var Parser = function () {
 			line = this.multilines.join(" ") + line;
 			this.multilines = [];
 		}
-
-		// check for comment line
-		pattern = /(^\*)|(^&&)/gi;
-		if (line.contains(pattern)) {
-			return true;
-		}
-
-		// ignored pattern
-		pattern = /(^endfor)|(^endtext)|(^endif)|(^endcase)|(^otherwise)|(^do case)|(^endif)|(^else)|(^select)|(^nodefault)|(dodefault)/gi;
-		if (line.contains(pattern)) {
-			return true;
-		}
-
-		// remove inline comments
-		line = this.removeInlineComments(line);
 
 		// check for class declaration
 		pattern = /(^define +class)/gi;
@@ -316,31 +309,23 @@ var Parser = function () {
 
 	this.contains = function (pattern, line) {
 		return pattern.test(line);
-	}
+	};
 
 	this.remove = function (pattern, line) {
 		return line.replace(pattern, '').trim();
-	}
+	};
 
 	this.getActiveClass = function () {
 		if (!this.Classes.length) {
 			this.Classes.push(new Class());
 		}
 		return this.Classes[this.Classes.length - 1];
-	}
+	};
 
 	this.getActiveMethod = function () {
 		var activeClass = this.getActiveClass();
 		return activeClass.getActiveMethod();
-	}
-
-	this.removeInlineComments = function (line) {
-		var pattern = /&&/gi;
-		if (line.contains(pattern)) {
-			return line.substr(0, line.indexOf('&&')).trim();
-		}
-		return line;
-	}
+	};
 
 	this.searchInlineParametersDeclaration = function (meth) {
 		var pattern = /\(/gi;
@@ -352,11 +337,47 @@ var Parser = function () {
 				meth.parameters.push(parameters[i].trim());
 			};
 		}
+	};
+
+	this.isEmptyLine = function (line) {
+		return line.length === 0;
 	}
+
+	this.isIgnoredPattern = function (line) {
+
+		var pattern;
+
+		// check for empty line
+		if (this.isEmptyLine(line)) {
+			return true;
+		}
+
+		// check for comment line
+		pattern = /(^\*)|(^&&)/gi;
+		if (line.contains(pattern)) {
+			return true;
+		}
+
+		// ignored pattern
+		pattern = /(^endfor)|(^endtext)|(^endif)|(^endcase)|(^otherwise)|(^do case)|(^endif)|(^else)|(^select)|(^nodefault)|(^dodefault)|(^#include)/gi;
+		if (line.contains(pattern)) {
+			return true;
+		}
+
+	};
+
+	// remove inline comments and trailing spaces
+	this.cleanUpLine = function (line) {
+		var pattern = /&&/gi;
+		if (line.contains(pattern)) {
+			return line.substr(0, line.indexOf('&&')).trim();
+		}
+		return line.trim();
+	};
 
 	this.report = function () {
 		return JSON.stringify(this);
-	}
+	};
 
 };
 
