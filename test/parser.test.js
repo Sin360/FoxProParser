@@ -42,7 +42,10 @@ exports['parser'] = {
 		test.ok(this.parser.parseLine("DO FORM 'mop.scx' WITH M.oReleve, M.cNumNda"), "should return true");
 		test.ok(this.parser.Classes[0].methods[0].assignments[4], "oReleve", "should find variable assignment in do form command");
 		test.ok(this.parser.Classes[0].methods[0].assignments[5], "cNumNda", "should find variable assignment in do form command");
-
+		test.ok(this.parser.parseLine("scan for updated = M.nOK"), "should return true");
+		test.equal(this.parser.Classes[0].methods[0].assignments[6], "nOK", "should find variable assignment in scan for command");
+		test.ok(this.parser.parseLine("scan for updated = nUpdated"), "should return true");
+		test.equal(this.parser.Classes[0].methods[0].assignments[7], "nUpdated", "should find variable assignment in scan for command");
 		test.done();
 	},
 	report: function (test) {

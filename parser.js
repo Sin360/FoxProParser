@@ -228,6 +228,35 @@ var Parser = function () {
 			return true;
 		}
 
+		// if statements
+		pattern = /^if +(?:not)?/gi;
+		if (line.contains(pattern)) {
+			console.log("### " + line);
+			line = line.remove(pattern);
+			// check for function usage
+			pattern = /\(/gi;
+			if (line.contains(pattern)) {
+				var start = line.indexOf("(");
+				var end = line.indexOf(")");
+				line = line.substr(start + 1, end - start - 1).trim();
+			}
+
+			if (this.isEmptyLine(line)) {
+				return true;
+			}
+
+			pattern = /^this/gi;
+			if (line.contains(pattern)) {
+				// ignore class properties
+				return true;
+			}
+			// get active method object
+			var meth = this.getActiveMethod();
+			meth.assignments.push(line);
+			console.log('::> ' + line);
+			return true;
+		}
+
 		// for loop
 		pattern = /^for +(?:each +)?(?:m\.)?(\w*)/gi;
 		if (line.contains(pattern)) {
@@ -288,7 +317,7 @@ var Parser = function () {
 			// get active method object
 			var meth = this.getActiveMethod();
 			var assign = line.remove(pattern).remove(/(?:m\.)?/gi);
-			var pattern = /\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi;
+			pattern = /\([0-9](?:\,)?(?:\s)?(?:[0-9])?\)/gi;
 			if (!line.contains(pattern)) {
 				pattern = /\[[0-9](?:\,)?(?:\s)?(?:[0-9])?\]/gi;
 			}
@@ -298,6 +327,29 @@ var Parser = function () {
 				// class property
 				var activeClass = this.getActiveClass();
 				activeClass.properties.push(assign.remove(pattern));
+			}
+			return true;
+		}
+
+		// scan
+		pattern = /^scan for /gi;
+		if (line.contains(pattern)) {
+			line = line.remove(pattern);
+			pattern = /=(?:\s)?/gi;
+			if (line.contains(pattern)) {
+				line = line.remove(pattern);
+				lines = line.split(' ');
+				var meth = this.getActiveMethod();
+				for (var i = 1; i < lines.length; i++) {
+					line = lines[i].trim();
+					pattern = /(?:m\.)?/gi;
+					if (line.contains(pattern)) {
+						line = line.remove(pattern);
+						if (!line.isOperator() && !line.isNumber() && !line.isField() && !line.isProperty()) {
+							meth.assignments.push(line);
+						}
+					}
+				}
 			}
 			return true;
 		}
@@ -359,7 +411,7 @@ var Parser = function () {
 		}
 
 		// ignored pattern
-		pattern = /(^endfor)|(^endtext)|(^endif)|(^endcase)|(^otherwise)|(^do case)|(^endif)|(^else)|(^select)|(^nodefault)|(^dodefault)|(^#include)/gi;
+		pattern = /(^endfor)|(^endtext)|(^endwith)|(^endcase)|(^endif)|(^enddo)|(^endscan)|(^otherwise)|(^do case)|(^else)|(^select)|(^nodefault)|(^dodefault)|(^#include)|(^scan$)/gi;
 		if (line.contains(pattern)) {
 			return true;
 		}
@@ -418,6 +470,25 @@ String.prototype.contains = function (pattern) {
 String.prototype.remove = function (pattern) {
 	return this.replace(pattern, '').trim();
 }
+
+String.prototype.isField = function () {
+	return this == this.toUpperCase();
+}
+
+String.prototype.isNumber = function () {
+	var pattern = /^[0-9]/gi;
+	return this.contains(pattern);
+};
+
+String.prototype.isOperator = function () {
+	var pattern = /(\<\>)|(\<)|(\>)|(\<\=)|(\>\=)|(\!=)|(==)|(=)|(and)|(or)/gi;
+	return this.contains(pattern);
+};
+
+String.prototype.isProperty = function () {
+	var pattern = /(^this)|(^thisform)|(^\.)/gi;
+	return this.contains(pattern);
+};
 
 // expose parser constructor
 module.exports = Parser;
