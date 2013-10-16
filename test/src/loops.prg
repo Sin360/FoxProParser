@@ -1,0 +1,25 @@
+DEFINE CLASS Loops AS Test
+
+	PROCEDURE Scan
+
+		LOCAL cAlias
+
+		SELECT (M.cAlias)
+		SCAN
+		ENDSCAN
+
+		SELECT (M.cAlias)
+		SCAN FOR UPDATED = M.nUpdated
+		ENDSCAN
+
+		SELECT (M.cAlias)
+		SCAN FOR STATUS = nStatus
+		ENDSCAN
+
+		SELECT (M.cAlias)
+		SCAN FOR ID = M.nId AND STATUS <> 0 AND GRP = THIS.cGrp
+		ENDSCAN
+
+	ENDPROC
+
+ENDDEFINE
