@@ -1,8 +1,28 @@
 var Report = function (data) {
+
+	var self = this;
+
 	this.analyze = function () {
 
 	};
+
+	this.getVarType = function (variable) {
+		var type;
+		switch (variable[0]) {
+			case 'c': type = 'string'; break;
+			case 'd': type = 'date'; break;
+			case 'l': type = 'boolean'; break;
+			case 'n': type = 'integer'; break;
+			case 'o': type = 'object'; break;
+			case 's': type = 'string'; break;
+			case 't': type = 'datetime'; break;
+			default: type = 'type';
+		}
+		return type;
+	};
+
 	this.build = function () {
+
 		return ['<!DOCTYPE html>',
 			'<head>',
 				'<meta charset="utf-8">',
@@ -47,6 +67,44 @@ var Report = function (data) {
 				'</script>',
 			'</html>'
 		].join('');
+	};
+
+	this.doc = function () {
+
+		var report = JSON.parse(data);
+
+		var stream = '';
+
+		var header = '*<\n* description\n';
+		var classe = '*\n* @class ';
+		var extend = '\n* @extends ';
+		var footer = '\n*>\n';
+		var method = '*\n* @method ';
+
+		var classesLen = report.Classes.length;
+
+		for (var i = 0; i < classesLen; i++) {
+			var classObj = report.Classes[i];
+			stream = stream + header + classe + classObj.name + extend + classObj.parent + footer;
+
+			for (var j = 0; j < classObj.methods.length; j++) {
+				var methObj = classObj.methods[j];
+				stream = stream + '\n' + header + method + methObj.name;
+
+				for (var k = 0; k < methObj.parameters.length; k++) {
+					var param = methObj.parameters[k];
+					stream = stream + '\n* @param {' + this.getVarType(param) + '} ' + param + ' description';
+				}
+
+				if (methObj.returnCount) {
+					stream = stream + '\n* @return {type} description';
+				}
+
+				var stream = stream + footer;
+			}
+		}
+
+		return stream;
 	};
 };
 
