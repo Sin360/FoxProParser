@@ -6,6 +6,13 @@ var Report = function (data) {
 
 	};
 
+	/**
+	 * Returns variable type based on prefix
+	 *
+	 * @method getVarType
+	 * @param {string} variable Name of the variable
+	 * @return {string} Type of the variable
+	 */
 	this.getVarType = function (variable) {
 		var type;
 		switch (variable[0]) {
@@ -69,38 +76,41 @@ var Report = function (data) {
 		].join('');
 	};
 
+	/**
+	 * Generates yui documentation for classes and methods
+	 *
+	 * @method doc
+	 * @return {string} Classes and methods documentation
+	 */
 	this.doc = function () {
 
 		var report = JSON.parse(data);
-
 		var stream = '';
-
 		var header = '*<\n* description\n';
-		var classe = '*\n* @class ';
-		var extend = '\n* @extends ';
 		var footer = '\n*>\n';
-		var method = '*\n* @method ';
 
-		var classesLen = report.Classes.length;
+		// add class declaration
+		for (var i = 0, classesLen = report.Classes.length, classObj; i < classesLen; i++) {
+			classObj = report.Classes[i];
+			stream = stream + header + '*\n* @class ' + classObj.name + '\n* @extends ' + classObj.parent + footer;
 
-		for (var i = 0; i < classesLen; i++) {
-			var classObj = report.Classes[i];
-			stream = stream + header + classe + classObj.name + extend + classObj.parent + footer;
+			// add method declaration
+			for (var j = 0, methodsLen = classObj.methods.length, methObj; j < methodsLen; j++) {
+				methObj = classObj.methods[j];
+				stream = stream + '\n' + header + '*\n* @method ' + methObj.name;
 
-			for (var j = 0; j < classObj.methods.length; j++) {
-				var methObj = classObj.methods[j];
-				stream = stream + '\n' + header + method + methObj.name;
-
-				for (var k = 0; k < methObj.parameters.length; k++) {
-					var param = methObj.parameters[k];
+				// add param declaration
+				for (var k = 0, paramsLen = methObj.parameters.length, param; k < paramsLen; k++) {
+					param = methObj.parameters[k];
 					stream = stream + '\n* @param {' + this.getVarType(param) + '} ' + param + ' description';
 				}
 
+				// add return declaration
 				if (methObj.returnCount) {
 					stream = stream + '\n* @return {type} description';
 				}
 
-				var stream = stream + footer;
+				stream = stream + footer;
 			}
 		}
 
