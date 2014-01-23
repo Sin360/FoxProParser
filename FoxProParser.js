@@ -33,6 +33,13 @@
 		});
 
 		// write html report file
+		fs.writeFile('reports/doc.prg', report.doc(), function (err) {
+			if (err) {
+				throw err;
+			}
+		});
+
+		// write html report file
 		fs.writeFile('reports/report.html', report.build(), function (err) {
 			if (err) {
 				throw err;
