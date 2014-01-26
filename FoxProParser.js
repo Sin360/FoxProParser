@@ -4,6 +4,7 @@
 	var fs = require('fs');
 	var Parser = require('./parser.js');
 	var Report = require('./report.js');
+	var Doc = require('./doc.js');
 
 	// Read File content
 	fs.readFile(args[0], "utf8", function (err, data) {
@@ -33,14 +34,16 @@
 		});
 
 		// write html report file
-		fs.writeFile('reports/doc.prg', report.doc(), function (err) {
+		fs.writeFile('reports/report.html', report.build(), function (err) {
 			if (err) {
 				throw err;
 			}
 		});
 
-		// write html report file
-		fs.writeFile('reports/report.html', report.build(), function (err) {
+		var doc = new Doc(data);
+
+		// generates documentation
+		fs.writeFile('reports/doc.prg', doc.run(), function (err) {
 			if (err) {
 				throw err;
 			}
